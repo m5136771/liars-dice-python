@@ -53,8 +53,8 @@ def print_slower(t):
 def die_value_input(message):
    try:
       value = int(input(message))
-      if value > 6:
-        return die_value_input('Yarr.. don\'t ye know the rules? A die only has 6 sides! Try again. A number between 1 and 6 this time!:\n')
+      if value < 1 or value > 6:
+        return die_value_input('Yarr.. don\'t ye know the rules? A die has 6 sides! Try again. A number between 1 and 6 this time!:\n')
       else:
         return value
    except:
@@ -66,6 +66,8 @@ def die_quantity_input(message):
       if quantity > dice_in_play:
         print('There aren\'t even that many dice! Be reasonable! The number of dice in play is', dice_in_play)
         return die_quantity_input('Try again!:\n')
+      elif quantity < 1:
+        return die_quantity_input('Are ye daft!? What do you think that clatterin noise inside everyone\'s cups be then?? Play for real! How many dice ye wager?:\n')
       return quantity
    except:
       return die_quantity_input('What are you saying?? Choose a number!\n')
