@@ -1,4 +1,5 @@
 from random import randrange
+from random import randint
 import random, sys, time
 
 #---FUTURE FEATURES------------------------------------------------------------
@@ -18,7 +19,9 @@ class Player:
     self.dice_cup = dice_cup
     self.roll_total = roll_total
     self.bid_value = bid_value
-    self.bid_quantity = bid_quantity    
+    self.bid_quantity = bid_quantity
+    self.dice = [randint(1, 6) for _ in range(5)]
+    self.is_bot = name.startswith("Bot")    
 
 # Give each a name and an empty dice_cup.
 p1 = Player("Player 1", [], 0, 0, 0)
@@ -27,11 +30,17 @@ b2 = Player("Bot 2", [], 0, 0, 0)
 b3 = Player("Bot 3", [], 0, 0, 0)
 
 all_players = [p1, b1, b2, b3]
+
+# Game Info
 first_bid = None
 current_player = None
+dice_in_play = 0
 
 
 # ---Helper Functions ---------------------------------------------------------
+def player_input(prompt):
+  return int(input(prompt))
+
 # Just for fun
 typing_speed = 100 #wpm
 def print_slow(t):
@@ -72,10 +81,7 @@ def die_quantity_input(message):
    except:
       return die_quantity_input('What are you saying?? Choose a number!\n')
 
-# Dice functions
-# Init global variables
-dice_in_play = 0
-
+# ---Dice Functions ---------------------------------------------------------
 def count_dice():
     dice_total = 0
     for player in all_players:
@@ -84,89 +90,71 @@ def count_dice():
     return dice_total
 
 # Roll one die one time for a given player
-def roll_once(player):
+"""def roll_once(player):
     dice_in_play = count_dice()
     roll_result = randrange(1,7,1)
     dice_in_play += 1
-    player.dice_cup.insert(0, roll_result)
+    player.dice_cup.insert(0, roll_result)"""
 
 # Roll one die for a given player the amount of times specified
-def roll(player, times):
-    for _ in range(times):
-        roll_once(player)
+def roll(player, num_dice):
+  player.dice_cup = [randint(1, 6) for _ in range (num_dice)]
+  player.roll_total = sum(player.dice_cup)
+  
+# Make all players roll
+def roll_5():
+    for player in all_players:
+        player.dice_cup.clear()
+        if player == p1:
+            print(p1.name + '! Press ENTER to roll!')
+            input()
+            roll(player, 5)
+            print(player.name + ' rolls...')
+            #time.sleep(1)
+        else:
+            roll(player, 5)
+            print(player.name + ' rolls...')
+            #time.sleep(1)
 
+# ---Game Progression ---------------------------------------------------------
 # Determine who goes first
-def who_goes_first():
+def who_goes_first(all_players):
     highest_roller = None
     highest_roll = 0
 
     for player in all_players:
         roll(player, 2)
-        player.roll_total = sum(player.dice_cup)
         print(player.name + ' rolls and gets ' + str(player.roll_total) + '...')
         #time.sleep(1)
 
-        if player.roll_total > highest_roll & highest_roll !=0:
+        if player.roll_total > highest_roll or highest_roll == 0:
             highest_roll = player.roll_total
             highest_roller = player
             print(player.name + ' is now the highest roller!\n')
             #time.sleep(.5)
 
-        elif player.roll_total > highest_roll:
-            highest_roll = player.roll_total
-            highest_roller = player
-            print(player.name + ' is now the highest roller!\n')
-            #time.sleep(.5)
-
-        elif player.roll_total == 12:
+        elif player.roll_total == 12 & highest_roll:
             print('Wow! Two max rolls! I\'ll make them both roll again!')
             #time.sleep(.5)
             highest_roller.dice_cup = []
             player.dice_cup = []
             
             roll(highest_roller, 2)
-            highest_roller.roll_total = sum(highest_roller.dice_cup)
             print('The previous highest roller, ' + highest_roller.name + ', rolls and gets ' + str(highest_roller.roll_total) + '.')
             #time.sleep(.5)
             
             roll(player, 2)
-            player.roll_total = sum(player.dice_cup)
             print('The challenger, ' + player.name + ', rolls and gets ' + str(player.roll_total) + '.')
             #time.sleep(.5)
             
             if highest_roller.roll_total > player.roll_total:
-                print(highest_roller.name + ' holds on to first!')
+                print('Sorry, ' + player.name + 'No dice! haha! ' + highest_roller.name + ' holds on to first!')
                 #time.sleep(.5)
             elif highest_roller.roll_total == player.roll_total:
                 print('No way! They tied again! I\'m letting ' + highest_roller.name + ' keep first!')
                 #time.sleep(.5)
             else:
                 print(player.name + ' stole first!')
-                #time.sleep(.5)
-
-
-        elif player.roll_total == highest_roll:
-            print('There was a tie, so I\'ll make ' + player.name + ' roll again.')
-            #time.sleep(1)
-            player.dice_cup = []
-            roll(player, 2)
-            player.roll_total = sum(player.dice_cup)
-            print('This time they rolled a ' + str(player.roll_total) + '.')
-            #time.sleep(.5)
-
-            if player.roll_total > highest_roll:
-                highest_roll = player.roll_total
-                highest_roller = player
-                print('Good roll! ' + player.name + ' stole first!')
-                #time.sleep(.5)
-
-            elif player.roll_total == highest_roll:
-                print('You won\'t believe this, but they tied again! so I\'m letting ' + player.name + ' have first now.')
-                #time.sleep(.5)
-                highest_roll = player.roll_total
-                highest_roller = player
-            else:
-                print('Sorry, ' + player.name + '. No dice! haha! ' + highest_roller.name + ' holds on to first!')
                 #time.sleep(.5)
 
     print('\nThat\'s all the rolls! ' + highest_roller.name + ' will go first!\n\n')
@@ -186,60 +174,36 @@ def next_player(player):
     print('It\'s ' + player.name + '\'s turn next!')
     return player
 
-# Make all players roll
-def roll_5():
-    for player in all_players:
-        player.dice_cup.clear()
-        if player == p1:
-            print(p1.name + '! Press ENTER to roll!')
-            input()
-            roll(player, 5)
-            print(player.name + ' rolls...')
-            #time.sleep(1)
-        else:
-            roll(player, 5)
-            print(player.name + ' rolls...')
-            #time.sleep(1)
-
-# For the first turn
+# FIRST TURN
 def first_turn(player):
-    if player == p1:
-        print('Lucky you, ' + player.name + '! Make your bid!!')
-        player.bid_value = die_value_input('Choose a die value:\n')
-        player.bid_quantity = die_quantity_input('And how many do you think there are?:\n')
+  print('Lucky you, ' + player.name + '! Make your bid!!')
+  player.bid_value = player_input('Choose a die value:\n') if not player.is_bot else randrange(1, 7, 1)
+  player.bid_quantity = player_input('And how many do you think there are?:\n') if not player.is_bot else randrange(1, 5, 1)
+  
+print_message = f"Lucky you, {player.name}! Make your bid!!" if not player.is_bot else f"Ok ye bucket of bolts! {player.name}! Choose a die value:\nNow how many Arrr there? (That's a pirate joke.. I have a lot of them..):"
+    print(print_message)
+    print(player.bid_value) if player.is_bot else None
+    print(player.bid_quantity) if player.is_bot else None
 
-    else:
-        print('Ok ye bucket of bolts! ' + player.name + '! Choose a die value:\n')
-        #time.sleep(1)
-        player.bid_value = randrange(1, 7, 1)
-        print(player.bid_value)
-        #time.sleep(1)
-        print('Now how many Arrr there? (That\'s a pirate joke.. I have a lot of them..):\n')
-        player.bid_quantity = randrange(1, 5, 1)
-        print(player.bid_quantity)
-        #time.sleep(1)
-    
     return player.bid_quantity, player.bid_value
 
-def raise_bid_value(player, current_bid):
-    player.bid_value = die_value_input('Choose a die value the same or higher:\n')
-    
-    if player.bid_value < current_bid[0]:
-        print('Yarr.. don\'t ye know the rules? Your bid has to be the SAME or HIGHER than the current bid! Try again!:\n')
-        raise_bid_value(player, current_bid)
+# LATER TURNS
+def raise_bid(player, current_bid, input_func, prompt, bid_type):
+  player_bid = input_func(prompt)
+  
+  if player_bid < current_bid[bid_type]:
+        print(f'Yarr.. don\'t ye know the rules? Your bid has to be the SAME or HIGHER than the current bid! Try again!')
+        raise_bid(player, current_bid, input_func, prompt, bid_type)
     else:
         print('Mm.. yes.. you may be right. Good bid.')
-    return player.bid_value 
+
+    return player_bid
+  
+def raise_bid_value(player, current_bid):
+  return raise_bid(player, current_bid, player_input, 'Choose a die value the same or higher:\n', 0)
 
 def raise_bid_quantity(player, current_bid):
-    player.bid_quantity = die_quantity_input('How many do you think there are?:\n')
-    
-    if player.bid_quantity < current_bid[1]:
-        print('Yarr.. don\'t ye know the rules? Your bid has to be the SAME or HIGHER than the current bid! Try again!:')
-        raise_bid_quantity(player, current_bid)
-    else:
-        print('Mm.. yes.. you may be right. Good bid.')
-    return player.bid_quantity 
+    return raise_bid(player, current_bid, player_input, 'How many do you think there are?:\n', 1)
 
 # Turn Protocol
 # next_turn(current_player, first_bid)
