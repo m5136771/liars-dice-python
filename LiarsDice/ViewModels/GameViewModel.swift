@@ -32,6 +32,7 @@ final class GameViewModel: ObservableObject {
         rollNonce = 1
         headline = "Round 1 — \(state.diceInPlay) dice in play. Shake yer cups!"
         log = [headline]
+        AudioManager.shared.warmUp()
         start()
     }
 
@@ -172,22 +173,30 @@ final class GameViewModel: ObservableObject {
             switch event {
             case .roundStarted(let round, let dice):
                 rollNonce += 1
+                Feedback.play(.roll)
                 line = "Round \(round) — \(dice) dice in play. Shake yer cups!"
             case .openingBid(let id, let bid):
+                Feedback.play(.bid)
                 line = "\(name(id)) opens the biddin': \(bidText(bid))."
             case .raised(let id, let bid):
+                Feedback.play(.bid)
                 line = "\(name(id)) raises to \(bidText(bid))."
             case .challenged(let challenger, let bidder, _):
+                Feedback.play(.challenge)
                 line = "\(name(challenger)) calls \(name(bidder)) a LIAR!"
             case .revealed(let reveal):
+                Feedback.play(reveal.bidWasGood ? .revealGood : .revealLie)
                 let verdict = reveal.bidWasGood ? "The bid was GOOD!" : "It was a LIE!"
                 line = "Count 'em up — \(reveal.total) showing \(reveal.bid.face). \(verdict)"
             case .lostDie(let id, let remaining):
+                Feedback.play(.loseDie)
                 let noun = remaining == 1 ? "die" : "dice"
                 line = "\(name(id)) loses a die — \(remaining) \(noun) left."
             case .eliminated(let id):
+                Feedback.play(.eliminated)
                 line = "\(name(id)) is OUT of the game!"
             case .gameOver(let humanWon):
+                Feedback.play(humanWon ? .win : .lose)
                 line = humanWon ? "Last pirate standing — ye WIN!"
                                 : "Ye've lost yer last die..."
             }

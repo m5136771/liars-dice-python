@@ -8,6 +8,8 @@ struct MainMenuView: View {
 
     @AppStorage("playerName") private var name: String = ""
     @AppStorage("difficulty") private var difficultyRaw: String = Difficulty.normal.rawValue
+    @AppStorage("soundEnabled") private var soundEnabled: Bool = true
+    @AppStorage("hapticsEnabled") private var hapticsEnabled: Bool = true
     @State private var botCount: Int = 3
     @State private var onesWild: Bool = false
     @State private var showRules = false
@@ -108,14 +110,20 @@ struct MainMenuView: View {
                 }
             }
 
-            Toggle(isOn: $onesWild) {
-                Text("Ones are wild")
-                    .font(RetroFont.body(14))
-                    .foregroundStyle(Palette.ink)
-            }
-            .tint(Palette.danger)
+            toggleRow("Ones are wild", isOn: $onesWild)
+            toggleRow("Sound effects", isOn: $soundEnabled)
+            toggleRow("Haptics", isOn: $hapticsEnabled)
         }
         .panel()
+    }
+
+    private func toggleRow(_ title: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            Text(title)
+                .font(RetroFont.body(14))
+                .foregroundStyle(Palette.ink)
+        }
+        .tint(Palette.danger)
     }
 
     // MARK: - Small building blocks

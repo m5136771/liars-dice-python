@@ -20,13 +20,17 @@ LiarsDice/
   ViewModels/            GameViewModel: drives the engine, paces bot turns
   Views/                 SwiftUI screens (menu, table, dice, reveal, game over)
   Theme/                 Retro "pirate tavern" colors, fonts, components
-  Resources/             Flavor text (pirate narration, the Crazy Pete ending)
+  Services/              Feedback: sound effects + haptics
+  Resources/             Flavor text (Crazy Pete ending) + Audio/ chiptune SFX
   Assets.xcassets/       App icon + accent color
 Package.swift            Builds/tests the Engine from the command line
 Tests/                   Engine unit tests (swift test, or run in Xcode)
 project.yml              XcodeGen spec (recovery path; see Makefile)
+tools/                   Asset generators (make_icon.py, make_sfx.py — stdlib only)
 python-legacy/           The original Python teaching game, kept for posterity
 docs/ROADMAP.md          The plan to ship this on the App Store
+docs/BACKLOG.md          Prioritized feature backlog & user stories
+docs/ART_DIRECTION.md    Look-and-feel / pixel-art style guide
 ```
 
 The engine is deliberately separated from the UI: `LiarsDice/Engine` is pure
