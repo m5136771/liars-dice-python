@@ -1,9 +1,15 @@
 name: CI
 
-# Builds and tests the iOS game on macOS runners. The pure game engine is
-# tested with `swift test`; the SwiftUI app is compiled with xcodebuild for the
-# iOS Simulator (no signing needed). This is what actually verifies the Swift
-# code, since it can't be compiled in the Linux dev environment.
+# Verifies the pure game engine on every push / PR.
+#
+# The engine (LiarsDice/Engine) is Foundation-only Swift with no UI, so it
+# builds and runs its XCTest suite on a Linux Swift toolchain — fast, free, and
+# reliably provisioned. This is what compile-checks the core game logic.
+#
+# The SwiftUI iOS app itself targets iOS and is built/run in Xcode on a Mac
+# (see README and docs/ROADMAP.md). GitHub-hosted macOS runners were not
+# available for this repo, so the app build is not run in CI; build it locally
+# with `open LiarsDice.xcodeproj` or `make build`.
 
 on:
   pull_request:
@@ -16,30 +22,12 @@ concurrency:
 
 jobs:
   engine-tests:
-    name: Engine unit tests
-    runs-on: macos-15
+    name: Engine unit tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:5.10
     steps:
       - uses: actions/checkout@v4
-      - name: Show toolchain
-        run: |
-          xcodebuild -version
-          swift --version
+      - name: Swift version
+        run: swift --version
       - name: Run engine tests
         run: swift test
-
-  app-build:
-    name: Build iOS app
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
-      - name: Show toolchain
-        run: xcodebuild -version
-      - name: Build for iOS Simulator
-        run: |
-          xcodebuild \
-            -project LiarsDice.xcodeproj \
-            -scheme LiarsDice \
-            -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO \
-            build
