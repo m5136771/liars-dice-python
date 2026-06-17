@@ -100,3 +100,10 @@ a later update once you see retention.
 - Replace the **placeholder bundle id** before archiving.
 - Apple review for a simple, offline game is usually quick, but budget a few
   days and be ready to answer the gambling/age-rating questions.
+- **Continuous integration** isn't set up: GitHub-hosted runners (macOS *and*
+  Linux) failed to provision for this repo — every job died at startup with no
+  runner assigned, which points to Actions being disabled or limited on the
+  account, not a code problem. To enable CI later, turn on GitHub-hosted runners
+  (or add a self-hosted one) under the repo/owner **Settings → Actions**, then a
+  workflow can run `swift test` (engine) and `xcodebuild` (the app). Until then,
+  verify locally with `swift test` and an Xcode build.
