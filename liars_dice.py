@@ -1,46 +1,41 @@
-from random import randrange
 from random import randint
 import random, sys, time
 
 #---FUTURE FEATURES------------------------------------------------------------
-# Make it type out die values
-# fix grammar for 'one 1's'
-# Add difficulty levels by making the bots more 'strategic'
+# [DONE] fix grammar for 'one 1's' (we now say "1 die showing 4")
+# [DONE] give the bots a basic strategy for bidding and challenging
+# Make it type out die values (like "five 2's" -> "five twos")
+# Add harder difficulty levels by making the bots even smarter
 # Allow for adjusting the number of bots in game
 # Allow for multiple human players
 # Add a GUI
 
 
 # ---Information for Game------------------------------------------------------
-# Create players.
+# Every player (you and the bots) is built from this blueprint.
 class Player:
-  def __init__(self, name, dice_cup, roll_total, bid_value, bid_quantity):
-    self.name = name
-    self.dice_cup = dice_cup
-    self.roll_total = roll_total
-    self.bid_value = bid_value
-    self.bid_quantity = bid_quantity
-    self.dice = [randint(1, 6) for _ in range(5)]
-    self.is_bot = name.startswith("Bot")    
+  def __init__(self, name):
+    self.name = name            # what we call this player
+    self.dice_cup = []          # the dice they rolled this round (a list of numbers)
+    self.roll_total = 0         # used only when we roll to see who goes first
+    self.num_dice = 5           # how many dice they still have (you lose dice when you lose!)
+    self.is_bot = name.startswith("Bot")   # True for bots, False for the human
 
-# Give each a name and an empty dice_cup.
-p1 = Player("Player 1", [], 0, 0, 0)
-b1 = Player("Bot 1", [], 0, 0, 0)
-b2 = Player("Bot 2", [], 0, 0, 0)
-b3 = Player("Bot 3", [], 0, 0, 0)
+# Make one human player and three bots to play against.
+p1 = Player("Player 1")
+b1 = Player("Bot 1")
+b2 = Player("Bot 2")
+b3 = Player("Bot 3")
 
-all_players = [p1, b1, b2, b3]
+# 'players' holds everyone still in the game. When a player runs out of
+# dice, we remove them from this list.
+players = [p1, b1, b2, b3]
 
 # Game Info
-first_bid = None
-current_player = None
-dice_in_play = 0
+dice_in_play = 0   # total number of dice on the table right now
 
 
 # ---Helper Functions ---------------------------------------------------------
-def player_input(prompt):
-  return int(input(prompt))
-
 # Just for fun
 typing_speed = 100 #wpm
 def print_slow(t):
@@ -84,218 +79,233 @@ def die_quantity_input(message):
 # ---Dice Functions ---------------------------------------------------------
 def count_dice():
     dice_total = 0
-    for player in all_players:
+    for player in players:
         count = len(player.dice_cup)
         dice_total += count
     return dice_total
 
-# Roll one die one time for a given player
-"""def roll_once(player):
-    dice_in_play = count_dice()
-    roll_result = randrange(1,7,1)
-    dice_in_play += 1
-    player.dice_cup.insert(0, roll_result)"""
-
-# Roll one die for a given player the amount of times specified
+# Roll some dice for a given player the amount of times specified
 def roll(player, num_dice):
   player.dice_cup = [randint(1, 6) for _ in range (num_dice)]
   player.roll_total = sum(player.dice_cup)
   
-# Make all players roll
-def roll_5():
-    for player in all_players:
+# Make every player still in the game roll all of their dice.
+def roll_all():
+    for player in players:
         player.dice_cup.clear()
-        if player == p1:
-            print(p1.name + '! Press ENTER to roll!')
-            input()
-            roll(player, 5)
-            print(player.name + ' rolls...')
-            #time.sleep(1)
-        else:
-            roll(player, 5)
-            print(player.name + ' rolls...')
-            #time.sleep(1)
+        # The human gets to press ENTER to roll for dramatic effect.
+        if not player.is_bot:
+            print('\n' + player.name + '! Press ENTER to roll your ' + str(player.num_dice) + ' dice!')
+            input("")
+        roll(player, player.num_dice)
+        print(player.name + ' rolls...')
+        # Only the human is allowed to peek at their own dice!
+        if not player.is_bot:
+            print('Your dice are: ' + show_dice(player.dice_cup))
 
 # ---Game Progression ---------------------------------------------------------
-# Determine who goes first
-def who_goes_first(all_players):
+# Determine who goes first: everyone rolls 2 dice, highest roll wins.
+def who_goes_first():
     highest_roller = None
     highest_roll = 0
 
-    for player in all_players:
+    for player in players:
         roll(player, 2)
         print(player.name + ' rolls and gets ' + str(player.roll_total) + '...')
-        #time.sleep(1)
 
-        if player.roll_total > highest_roll or highest_roll == 0:
+        # If this is the best roll so far, this player takes the lead.
+        # (If there's a tie, whoever got there first keeps the lead.)
+        if player.roll_total > highest_roll:
             highest_roll = player.roll_total
             highest_roller = player
             print(player.name + ' is now the highest roller!\n')
-            #time.sleep(.5)
-
-        elif player.roll_total == 12 & highest_roll:
-            print('Wow! Two max rolls! I\'ll make them both roll again!')
-            #time.sleep(.5)
-            highest_roller.dice_cup = []
-            player.dice_cup = []
-            
-            roll(highest_roller, 2)
-            print('The previous highest roller, ' + highest_roller.name + ', rolls and gets ' + str(highest_roller.roll_total) + '.')
-            #time.sleep(.5)
-            
-            roll(player, 2)
-            print('The challenger, ' + player.name + ', rolls and gets ' + str(player.roll_total) + '.')
-            #time.sleep(.5)
-            
-            if highest_roller.roll_total > player.roll_total:
-                print('Sorry, ' + player.name + 'No dice! haha! ' + highest_roller.name + ' holds on to first!')
-                #time.sleep(.5)
-            elif highest_roller.roll_total == player.roll_total:
-                print('No way! They tied again! I\'m letting ' + highest_roller.name + ' keep first!')
-                #time.sleep(.5)
-            else:
-                print(player.name + ' stole first!')
-                #time.sleep(.5)
 
     print('\nThat\'s all the rolls! ' + highest_roller.name + ' will go first!\n\n')
     return highest_roller
 
-# Determine who goes next
+# Find whose turn is next by stepping to the next player in the list.
+# The % (modulo) wraps us back to the start when we reach the end.
 def next_player(player):
-    if player == p1:
-        player = b1
-    elif player == b1:
-        player = b2
-    elif player == b2:
-        player = b3
+    i = players.index(player)
+    return players[(i + 1) % len(players)]
+
+# ---BIDDING HELPERS-----------------------------------------------------------
+# Turn a bid into nice readable text, like "3 dice showing 5".
+# (This also fixes the awkward 'one 1's' grammar from earlier!)
+def bid_text(quantity, value):
+    word = 'die' if quantity == 1 else 'dice'
+    return str(quantity) + ' ' + word + ' showing ' + str(value)
+
+# Turn a list of dice into something pretty, like "[2] [5] [1]".
+def show_dice(cup):
+    return ' '.join('[' + str(d) + ']' for d in cup)
+
+# A new bid must be HIGHER than the old one. That means either a bigger
+# quantity, OR the same quantity with a bigger die value.
+def is_higher_bid(new_q, new_v, old_q, old_v):
+    if new_q > old_q:
+        return True
+    if new_q == old_q and new_v > old_v:
+        return True
+    return False
+
+# ---TAKING A TURN-------------------------------------------------------------
+# The very first bid of a round. The starting player can't challenge yet
+# (there's nothing to challenge!), so they just make a bid.
+def opening_bid(player):
+    if player.is_bot:
+        # The bot bids a value and a quantity loosely based on its own dice.
+        value = randint(1, 6)
+        quantity = player.dice_cup.count(value) + randint(0, 1)
+        if quantity < 1:
+            quantity = 1
+        if quantity > dice_in_play:
+            quantity = dice_in_play
+        print('Ok ye bucket of bolts, ' + player.name + ' opens the bidding!')
+        return quantity, value
     else:
-        player = p1
-    
-    print('It\'s ' + player.name + '\'s turn next!')
-    return player
+        print('\nLucky you, ' + player.name + '! Ye make the first bid!')
+        print('Your dice are: ' + show_dice(player.dice_cup))
+        value = die_value_input('Choose a die value (1-6):\n')
+        quantity = die_quantity_input('And how many do ye think there be in total?:\n')
+        return quantity, value
 
-# FIRST TURN
-def first_turn(player):
-  print('Lucky you, ' + player.name + '! Make your bid!!')
-  player.bid_value = player_input('Choose a die value:\n') if not player.is_bot else randrange(1, 7, 1)
-  player.bid_quantity = player_input('And how many do you think there are?:\n') if not player.is_bot else randrange(1, 5, 1)
-  
-print_message = f"Lucky you, {player.name}! Make your bid!!" if not player.is_bot else f"Ok ye bucket of bolts! {player.name}! Choose a die value:\nNow how many Arrr there? (That's a pirate joke.. I have a lot of them..):"
-    print(print_message)
-    print(player.bid_value) if player.is_bot else None
-    print(player.bid_quantity) if player.is_bot else None
+# Ask the human what they want to do. Returns one of:
+#   ('raise', quantity, value)   or   ('challenge', None, None)
+def human_turn(player, cur_q, cur_v):
+    print('The current bid is ' + bid_text(cur_q, cur_v) + '.')
+    print('Your dice are: ' + show_dice(player.dice_cup))
 
-    return player.bid_quantity, player.bid_value
+    # Is a higher bid even possible? (You can't go past every die showing a 6.)
+    higher_possible = cur_q < dice_in_play or cur_v < 6
 
-# LATER TURNS
-def raise_bid(player, current_bid, input_func, prompt, bid_type):
-  player_bid = input_func(prompt)
-  
-  if player_bid < current_bid[bid_type]:
-        print(f'Yarr.. don\'t ye know the rules? Your bid has to be the SAME or HIGHER than the current bid! Try again!')
-        raise_bid(player, current_bid, input_func, prompt, bid_type)
-    else:
-        print('Mm.. yes.. you may be right. Good bid.')
+    while True:
+        choice = input('Will ye RAISE or CHALLENGE the last bid?\n1: RAISE\n2: CHALLENGE\n')
 
-    return player_bid
-  
-def raise_bid_value(player, current_bid):
-  return raise_bid(player, current_bid, player_input, 'Choose a die value the same or higher:\n', 0)
+        if choice in {'1', 'one', 'One', 'raise', 'RAISE'}:
+            if not higher_possible:
+                print('There\'s no higher bid to be made, matey! Ye must CHALLENGE!')
+                continue
+            # Keep asking until they give a bid that is actually higher.
+            while True:
+                new_v = die_value_input('Choose a die value (1-6):\n')
+                new_q = die_quantity_input('How many do ye think there be?:\n')
+                if is_higher_bid(new_q, new_v, cur_q, cur_v):
+                    print('Mm.. yes.. ye may be right. Good bid.')
+                    return ('raise', new_q, new_v)
+                else:
+                    print('Yarr! Yer bid must be a HIGHER quantity, or the SAME quantity with a HIGHER die value! Try again!')
 
-def raise_bid_quantity(player, current_bid):
-    return raise_bid(player, current_bid, player_input, 'How many do you think there are?:\n', 1)
+        elif choice in {'2', 'two', 'Two', 'challenge', 'CHALLENGE'}:
+            return ('challenge', None, None)
 
-# Turn Protocol
-# next_turn(current_player, first_bid)
-def next_turn(player, bid):
-    current_bid = bid
-    choice = 0
-    player.bid = [0, 0]
-
-    if player == p1:
-        choice = input('Ok ' + player.name + '! Will you RAISE or CHALLENGE the last bid?\n1: RAISE\n2: CHALLENGE\n')
-        if choice in {'1', 'one', 'One'}:
-            print('Very well.. the current bid is ' + str(current_bid[1]) + ' ' + str(current_bid[0]) + '\'s.')
-            player.bid[0] = raise_bid_value(player, current_bid)
-            player.bid[1] = raise_bid_quantity(player, current_bid)
-            current_bid = player.bid
-            new_player = next_player(player)
-            next_turn(new_player, current_bid)
-
-        elif choice in {'2', 'two', 'Two'}:
-            print('We have a CHALLENGE! hahaha! That\'s it then, ye bilgerats! Show your dice!!')
-            reveal_dice()
         else:
-            print('That\'s not a choice ye scallywag! Make a real choice or its to the plank with you!!')
-            choice = input('Ok ' + player.name + '! NOW WILL YE *RAISE* or *CHALLENGE* THE LAST BID!?\n1: RAISE\n2: CHALLENGE\n')
-            if choice in {'1', 'one', 'One'}:
-                print('Very well.. the current bid is ' + str(current_bid[1]) + ' ' + str(current_bid[0]) + '\'s.')
-                player.bid_value = raise_bid_value(player, current_bid)
-                player.bid_quantity = raise_bid_quantity(player, current_bid)
-                current_bid = [player.bid_value, player.bid_quantity]
-                new_player = next_player(player)
-                next_turn(new_player, current_bid)
-                    
-            elif choice in {'2', 'two', 'Two'}:
-                print('We have a CHALLENGE! hahaha! That\'s it then, ye bilgerats! Show your dice!!')
-                reveal_dice()
-            else:
-                print('THAT\'S IT LANDLUBBER!!\n' + player.name + ', YOU are a LIAR and you will spend ETERNITY ON THIS SHIP!!')
-                game_over()
+            print('That\'s not a choice ye scallywag! Pick 1 or 2!')
 
+# Let a bot decide what to do. Same return format as human_turn.
+def bot_turn(player, cur_q, cur_v):
+    # How many of the bid value does the bot already have in its own cup?
+    own = player.dice_cup.count(cur_v)
+    # Guess how many the OTHER players have (each die has a 1-in-6 chance).
+    others = dice_in_play - len(player.dice_cup)
+    expected = own + others / 6
+
+    # Can a higher bid even be made?
+    can_raise_quantity = cur_q < dice_in_play
+    can_raise_value = cur_v < 6
+
+    # Decide whether to challenge. The more the bid passes what we'd expect,
+    # the more likely the bot thinks it's a big fat lie.
+    if not can_raise_quantity and not can_raise_value:
+        challenge = True                      # no higher bid is possible!
+    elif cur_q > expected + 1:
+        challenge = randint(1, 10) <= 8       # bid looks too greedy
+    elif cur_q > expected:
+        challenge = randint(1, 10) <= 3       # bid is a little high
     else:
-        print('Ok ' + player.name + '! Will you RAISE or CHALLENGE the last bid?')
-        choice = randrange(1,11,1)
-        if choice < 9:
-            print('Ok, so what\'s your bid?')
-            player.bid[0] = current_bid[0] + randrange(1,2)
-            if current_bid[0] > 6:
-                current_bid[0] = 6
-            player.bid[1] = current_bid[1] + randrange(1,4)
-            if player.bid[1] > dice_in_play:
-                player.bid[1] = dice_in_play
-            print('The bid is in... ' + player.name + ' thinks there be ' + str(player.bid[0]) + ' ' + str(player.bid[1]) + '\'s!')
-            current_bid = player.bid
-            new_player = next_player(player)
-            next_turn(new_player, current_bid)
+        challenge = randint(1, 10) <= 1       # bid seems safe, rarely challenge
+
+    if challenge:
+        return ('challenge', None, None)
+
+    # Otherwise the bot raises. Sometimes bump the value, otherwise the quantity.
+    if can_raise_value and randint(1, 2) == 1:
+        return ('raise', cur_q, cur_v + 1)
+    elif can_raise_quantity:
+        return ('raise', cur_q + 1, cur_v)
+    else:
+        return ('raise', cur_q, cur_v + 1)
+
+# ---PLAYING A ROUND-----------------------------------------------------------
+# Play one full round of bidding. Returns the player who loses a die.
+def play_round(starting_player):
+    global dice_in_play
+
+    print('\n=========== NEW ROUND ===========')
+    roll_all()
+    dice_in_play = count_dice()
+    print('\nThere are ' + str(dice_in_play) + ' dice in play this round.')
+
+    # The starting player makes the opening bid.
+    cur_q, cur_v = opening_bid(starting_player)
+    bidder = starting_player
+    print('\nThe first bid is in! ' + bidder.name + ' bids ' + bid_text(cur_q, cur_v) + '.')
+
+    # Then we go around the table until someone challenges.
+    player = next_player(starting_player)
+    while True:
+        print('\n--- It\'s ' + player.name + '\'s turn! ---')
+        if player.is_bot:
+            action, new_q, new_v = bot_turn(player, cur_q, cur_v)
         else:
-            print('We have a CHALLENGE! hahaha! That\'s it then, ye bilgerats! Show your dice!!')
-            reveal_dice()
+            action, new_q, new_v = human_turn(player, cur_q, cur_v)
 
-# Define what happens when the last bid is challenged and dice are revealed
-# count quantity of each value
+        if action == 'challenge':
+            print('\nWe have a CHALLENGE! ' + player.name + ' doesn\'t believe ' + bidder.name + '!')
+            print('That\'s it then, ye bilgerats! Show your dice!!')
+            return reveal_dice(bidder, player, cur_q, cur_v)
+        else:
+            cur_q, cur_v = new_q, new_v
+            bidder = player
+            print(player.name + ' bids ' + bid_text(cur_q, cur_v) + '.')
+            player = next_player(player)
 
-# Cleanup. IF bidding player loses, remove 1d6
-# if challenger loses, remove 1d6
-# New Round. losing player plays first 
-def reveal_dice():
-    print('DICE REVEAL!')
-    """ if 1:
-        reset_game_1()
-    elif 2:
-        reset_game_2()
-    elif 3:
-        end_game_1()
+# ---THE BIG REVEAL------------------------------------------------------------
+# A bid was challenged! Show everyone's dice, count up the bid value, and
+# figure out who was right. The loser of the argument loses a die.
+def reveal_dice(bidder, challenger, cur_q, cur_v):
+    print('\n*********** DICE REVEAL! ***********')
+    total = 0
+    for player in players:
+        print(player.name + ' had: ' + show_dice(player.dice_cup))
+        total += player.dice_cup.count(cur_v)   # add up the matching dice
+
+    print('\nThere were ' + str(total) + ' dice showing ' + str(cur_v) + ' in total!')
+    print('The bid was ' + bid_text(cur_q, cur_v) + '.')
+
+    # If there were at least as many as the bid claimed, the bidder was right.
+    if total >= cur_q:
+        print('\nThe bid was GOOD! ' + bidder.name + ' was tellin\' the truth!')
+        print(challenger.name + ' loses a die for the false challenge!')
+        return challenger
     else:
-        end_game_2() """
-
-# Define if challenger is right
-""" def reset_game_1():
-    print('code here')
-    next_player() """
-
-# Define if challenger is wrong
-""" def reset_game_2():
-    print('code here')
-    next_player() """
+        print('\nThe bid was a LIE! There just weren\'t enough!')
+        print(bidder.name + ' gets caught and loses a die!')
+        return bidder
 
 
 # ---GAME ENDINGS--------------------------------------------------------------
+# The happy ending: the human is the last pirate standing and wins!
 def end_game_1():
-    print('You did it!')
+    print_slower('\nBosun: Well, blow me down! Ye actually WON?!')
+    print_slower('Ye stared the sea devils in the eye and out-lied every last one of \'em!')
+    print_slower('Take yer gold and get off me ship before I change me mind! HAHAHA!')
+    print('\n*** YOU WIN! Congratulations, ' + p1.name + '! ***')
 
+# The not-so-happy ending: this is called at the very end of game_over().
 def end_game_2():
-    print('You also did it!')
+    print('\n*** GAME OVER ***')
+    print_slower('Ye lost all yer dice, and now ye scrub the decks of the Flying Dutchman for eternity... Arrr.')
 
 # When you just can't be a team player...
 def game_over():
@@ -337,35 +347,62 @@ def game_over():
         end_game_2()
 
 
-# Start Game
-#------------------------------------------------------------------------------
-print("Player 1! What is your name?:")
-p1.name = input("")
-if p1.name == "":
-    p1.name = 'Player 1'
+# ---START THE GAME------------------------------------------------------------
+# This function runs the whole game from start to finish.
+def play_game():
+    # Ask the human for their name.
+    print('Player 1! What is your name?:')
+    p1.name = input('')
+    if p1.name == '':
+        p1.name = 'Player 1'
 
-print('Great! Nice to meet you, ' + p1.name + '!\nArrr you ready to play a game of Pirate\'s Dice!? ')
-input("")
-print('Then stop your lollygagging!! LET\'S PLAY!\n\nPlayers! Roll to see who goes first!\n')
-print('Press ENTER to roll...')
-input("")
+    print('Great! Nice to meet you, ' + p1.name + '!')
+    print('Arrr ye ready to play a game of Pirate\'s Dice!?')
+    input('')
+    print('Then stop yer lollygagging!! LET\'S PLAY!\n')
+    print('Here be the rules: everyone hides their dice. On yer turn ye either')
+    print('RAISE the bid (more dice, or a higher value) or CHALLENGE the last bid.')
+    print('On a challenge, we count ALL the dice. Guess wrong and ye lose a die.')
+    print('Lose all yer dice and ye be OUT. Last pirate standing wins!\n')
 
-# 1. players roll 2 dice to determine who goes first
-current_player = who_goes_first()
+    print('Players! Roll to see who goes first!')
+    print('Press ENTER to roll...')
+    input('')
 
-# 2. all players roll dice (get 5 values of 1-6)
-print('\nFIRST TURN!\nEveryone ROLLLLLL!!')
-#time.sleep(1)
-all_dice_cups = roll_5()
-dice_in_play = count_dice()
-print('The rolls are done! Get ready for the first bid!')
-#time.sleep(1)
+    # First, roll to see who starts.
+    current_player = who_goes_first()
 
-# 3. first player bids (choose a value, choose a quantity ex: five 2s)
-first_bid = first_turn(current_player)
-print('\nThe first bid is in!\n' + current_player.name + ' bids ' + str(first_bid[1]) + ' ' + str(first_bid[0]) + '\'s.')
-#time.sleep(1)
+    # Keep playing rounds until only one pirate is left standing.
+    while len(players) > 1:
+        loser = play_round(current_player)
 
-# 4. next player chooses: A. raise quantity or B. Challenge bid
-current_player = next_player(current_player)
-next_turn(current_player, first_bid)
+        # The loser of the round loses one die.
+        loser.num_dice -= 1
+
+        if loser.num_dice <= 0:
+            # This player is out of dice and out of the game!
+            print('\n' + loser.name + ' has lost their last die and is OUT of the game!')
+            next_starter = next_player(loser)   # work out who's next BEFORE removing
+            players.remove(loser)
+
+            # If the human is knocked out, it's the Crazy Pete ending...
+            if loser is p1:
+                game_over()
+                return
+
+            current_player = next_starter
+        else:
+            # Still in the game! The loser starts the next round.
+            print('\n' + loser.name + ' now has ' + str(loser.num_dice) + ' dice left.')
+            current_player = loser
+
+        # Is there only one pirate left? Then we have a winner!
+        if len(players) == 1:
+            if players[0] is p1:
+                end_game_1()
+            else:
+                print('\n' + players[0].name + ' is the last pirate standing and wins!')
+            return
+
+# Actually start the game!
+play_game()
