@@ -1,0 +1,14 @@
+# Dependencies for the graphical version of Liar's Dice.
+#
+# pygame  -- runs the point-and-click game window (liars_dice_gui.py)
+# pillow  -- only needed if you want to (re)generate the pixel-art sprites
+#            with generate_assets.py. The artwork is already committed in
+#            assets/, so you don't need Pillow just to play.
+#
+# Install with:  pip install -r requirements.txt
+#
+# (The original terminal game, liars_dice.py, needs none of these -- it runs
+#  on a plain Python 3 install.)
+
+pygame>=2.5
+pillow>=10.0
