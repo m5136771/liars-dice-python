@@ -8,7 +8,7 @@ import random, sys, time
 # Add harder difficulty levels by making the bots even smarter
 # Allow for adjusting the number of bots in game
 # Allow for multiple human players
-# Add a GUI
+# [DONE] Add a GUI -- see liars_dice_gui.py (pixel-art pygame version)
 
 
 # ---Information for Game------------------------------------------------------
