@@ -1,39 +1,85 @@
-# liars-dice-python
+# Liar's Dice ☠︎
 
-A simple, silly, pirate-themed game of **Liar's Dice** (a.k.a. Pirate's Dice),
-written in Python to help high school students learn to code. The code is
-heavily commented so you can follow exactly what every section does.
+A pirate-themed game of **Liar's Dice** (a.k.a. Pirate's Dice) for **iOS**,
+written in **Swift / SwiftUI**. Bluff your way past a crew of bots, call out
+their lies, and don't be the last scallywag holding nothing — or you'll be
+sentenced to the Flying Dutchman to listen to Crazy Pete for eternity.
 
-You play against three bots aboard a pirate ship. Lie well, call out the liars,
-and don't be the last scallywag holding no dice... or you'll be stuck listening
-to Crazy Pete for all eternity.
+> This project began life as a heavily-commented Python CLI used to teach high
+> school students to code. It is now being rebuilt as a native iOS game for the
+> App Store. The original teaching code is preserved under
+> [`python-legacy/`](python-legacy/).
 
-## How to run it
-
-You need Python 3 installed. Then, from this folder:
+## Project layout
 
 ```
-python liars_dice.py
+LiarsDice.xcodeproj      The iOS app project — open this in Xcode
+LiarsDice/
+  App/                   App entry point and root navigation
+  Engine/                Pure game logic (no UI) — the rules live here
+  ViewModels/            GameViewModel: drives the engine, paces bot turns
+  Views/                 SwiftUI screens (menu, table, dice, reveal, game over)
+  Theme/                 Retro "pirate tavern" colors, fonts, components
+  Services/              Feedback: sound effects + haptics
+  Resources/             Flavor text (Crazy Pete ending) + Audio/ chiptune SFX
+  Assets.xcassets/       App icon + accent color
+Package.swift            Builds/tests the Engine from the command line
+Tests/                   Engine unit tests (swift test, or run in Xcode)
+project.yml              XcodeGen spec (recovery path; see Makefile)
+tools/                   Asset generators (make_icon.py, make_sfx.py — stdlib only)
+python-legacy/           The original Python teaching game, kept for posterity
+docs/ROADMAP.md          The plan to ship this on the App Store
+docs/BACKLOG.md          Prioritized feature backlog & user stories
+docs/ART_DIRECTION.md    Look-and-feel / pixel-art style guide
 ```
 
-(On some computers the command is `python3` instead of `python`.)
+The engine is deliberately separated from the UI: `LiarsDice/Engine` is pure
+value-type Swift with no SwiftUI imports. It compiles into the app **and** into
+a standalone Swift package so the rules can be unit-tested in seconds without a
+simulator.
+
+## Getting started (on a Mac with Xcode 16+)
+
+```bash
+# 1. Run the engine tests — no Xcode UI required
+swift test            # or: make test
+
+# 2. Open and run the app
+open LiarsDice.xcodeproj   # or: make open
+#   then pick an iPhone simulator and press ⌘R
+```
+
+Before building to a device or submitting, set your signing team and a real
+bundle identifier in Xcode (**Target ▸ Signing & Capabilities**). The project
+ships with a placeholder bundle id `com.example.liarsdice`.
+
+If the committed Xcode project ever drifts, regenerate it from `project.yml`:
+
+```bash
+brew install xcodegen && xcodegen generate   # or: make project
+```
 
 ## How to play
 
-1. Everyone secretly rolls their dice. You can see yours; the bots hide theirs.
+1. Everyone secretly rolls their dice. You see yours; the crew hides theirs.
 2. On your turn you either:
    - **RAISE** the bid — claim there are *more* dice of a value, **or** the same
-     number of a *higher* value, across everyone's cups, or
+     number of a *higher* value, across everyone's cups; or
    - **CHALLENGE** the last bid if you think it's a lie.
-3. When a bid is challenged, everyone reveals their dice and we count them up:
-   - If there really are at least that many, the bid was good and the
-     **challenger** loses a die.
-   - If there aren't enough, the bid was a lie and the **bidder** loses a die.
-4. Lose all your dice and you're out. The last pirate standing wins!
+3. On a challenge, all dice are counted. Guess wrong and you lose a die.
+4. Lose all your dice and you're out. Last pirate standing wins the gold.
 
-## Files
+House rules (set on the main menu): crew size, bot difficulty, and an optional
+"ones are wild" variant.
 
-- `liars_dice.py` — the complete, playable game.
-- `learning_liars_dice.py` — the original "thinking out loud" notes showing how
-  the project was figured out, step by step. Great for learners to read!
-- `init.py` — a tiny package file with a version number and a greeting.
+## Status
+
+**Done — v0.1.0 "Playable foundation"** (see [`CHANGELOG.md`](CHANGELOG.md)):
+a complete rules engine, single-player vs. bots with three difficulties, the
+full game loop, a styled retro UI, the app icon, and chiptune sound + haptics.
+
+**In progress / next** (see [`docs/BACKLOG.md`](docs/BACKLOG.md) for the
+prioritized backlog and [`docs/ROADMAP.md`](docs/ROADMAP.md) for the path to the
+App Store): a first-run tutorial, VoiceOver accessibility, App Store Connect
+setup, and art/animation polish. The agreed visual direction is in
+[`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md).

@@ -1,0 +1,139 @@
+# Art direction & style guide — Liar's Dice
+
+This is the decided look and feel. Use it to source pixel art (itch.io, asset
+packs, commissions) or to make your own. Everything here matches the in-app code
+(`LiarsDice/Theme/Theme.swift`) and the shipped app icon, so new art should drop
+in consistently.
+
+## 1. Vision
+
+**"A pirate's tavern dice game — cozy lantern-light with a hint of menace."**
+
+- **Genre cue:** retro / 16-bit pixel art, but readable and clean (not noisy).
+- **Mood:** warm wood and felt, weathered gold, bone-white dice, deep sea-night
+  background. Playful pirate humor (kept from the original), with the lurking
+  threat of the Flying Dutchman on a loss.
+- **Reference touchstones:** classic tabletop dice, *Inside the Backrooms*-free
+  pixel UI cleanliness, *Loop Hero* / *Shipwrecked 64* palettes, old wooden
+  board games. Cozy, hand-made, slightly grimy — not slick or corporate.
+
+## 2. Palette (authoritative)
+
+Use these exact hex values; they are defined in `Palette` in `Theme.swift`.
+
+| Token | Hex | Use |
+|---|---|---|
+| Night | `#14151F` | Background base, deepest shadow |
+| Night Dark | `#0C0D14` | Vignette / icon corners |
+| Table | `#2A6F5A` | Felt green (table surface) |
+| Table Hi | `#37866E` | Felt highlight / gradient center |
+| Table Dark | `#1E5142` | Felt shadow |
+| Wood | `#4A3526` | Cup backs, frames, knobs |
+| Wood Dark | `#2A1C12` | Wood shadow / outer frame |
+| Parchment | `#E9D8A6` | Panels, speech bubbles, bones |
+| Parchment Dk | `#8A7344` | Bone/parchment shading |
+| Gold | `#F2C14E` | Accents, frames, highlights, primary buttons |
+| Gold Dark | `#B8882A` | Gold shading / borders |
+| Bone | `#F6F0E2` | Dice body |
+| Bone Hi | `#FFFCF2` | Dice top highlight |
+| Bone Shade | `#CEC4B0` | Dice underside |
+| Pip | `#23201A` | Dice pips |
+| Ink | `#241B12` | Outlines (use on almost everything) |
+| Cream | `#F7F3E8` | Light text on dark |
+| Danger | `#D1495B` | Challenge button, "lie", destructive |
+| Raise | `#3D8BFF` | (reserved) raise accents |
+
+Rules of thumb: **dark ink outlines** on shapes; **gold** is the hero accent
+(use sparingly); **danger red** only for challenge/lie moments.
+
+## 3. Pixel grid & scaling
+
+- **Author at low resolution, scale by integers.** The app icon is built on a
+  **64×64** grid, upscaled ×16 to 1024. Sprites should follow the same idea.
+- **No anti-aliasing / no smoothing.** Use nearest-neighbor scaling. In SwiftUI,
+  set `.interpolation(.none)` on `Image` for any imported pixel sprite.
+- **Recommended sprite sizes (author size → in-app):**
+  | Asset | Author px | Notes |
+  |---|---|---|
+  | Die face (1–6) | 16×16 or 24×24 | One sprite per face, plus a "cup back" |
+  | Opponent portrait | 32×32 | Optional pirate avatars |
+  | Icon / button glyphs | 16×16 | Sound, back, settings, skull |
+  | Table tile / texture | 32×32 (tiling) | Subtle felt/wood grain |
+- **Outline weight:** 1 author-pixel, color `Ink (#241B12)`.
+
+## 4. Dice (the hero asset)
+
+- **Body:** Bone `#F6F0E2`, rounded-square, 1px Ink outline. Top edge gets a
+  Bone Hi band; underside a Bone Shade band (carved look).
+- **Pips:** `#23201A`, round-ish, classic layouts (see `PipLayout` in
+  `DieView.swift`). 5-pip face is the brand face (used in the icon).
+- **Cup back (hidden die):** Wood `#4A3526` with a small parchment dot, Ink
+  outline (see `FaceDownDie`).
+- Currently drawn procedurally in SwiftUI. To swap in hand-drawn sprites, replace
+  the body of `DieView`/`FaceDownDie` with `Image(...).interpolation(.none)` —
+  the call sites don't change.
+
+## 5. UI components
+
+- **Panels:** Parchment `#E9D8A6`, 12px corner radius, 3px Ink border
+  (`.panel()` modifier).
+- **Primary button:** Gold fill, Ink border, drops 3px when pressed
+  (`RetroButtonStyle`). **Challenge button:** Danger red fill, Cream text.
+- **Speech bubbles:** Parchment capsule, Ink border, holds a bid like `3× [die]`.
+- **Frames:** thick Wood Dark outer frame; Gold inner frame for emphasis (as in
+  the icon).
+
+## 6. Typography
+
+- **Now:** system monospaced, heavy/black weights (`RetroFont`) — reads as retro,
+  ships today, scales with Dynamic Type.
+- **Upgrade path (P2):** bundle a true pixel font and change `RetroFont` in one
+  place. Good options & licenses:
+  - **Press Start 2P** (OFL, free) — iconic arcade look, wide.
+  - **m6x11 / m5x7** by Daniel Linssen (free, very legible).
+  - **Pixellari**, **Munro**, **ThaleahFat** (free/cheap, friendly).
+  - Verify each font's license allows app embedding before shipping.
+
+## 7. App icon
+
+Shipped: a bone die (5 pips) with crossed bones behind it, a gold pixel frame,
+on a teal→navy radial. Generated reproducibly by `tools/make_icon.py`. Concept
+variants live in `docs/icon-concepts/` (bones / clean / gold die). To change it,
+edit and re-run the script — it writes `AppIcon-1024.png` directly into the
+asset catalog (opaque, 1024×1024, App-Store compliant).
+
+## 8. Audio (for consistency with art)
+
+8-bit chiptune, generated by `tools/make_sfx.py` (square/triangle/noise waves).
+Keep any future audio in the same lo-fi register: short, punchy, no realistic
+foley. Files live in `LiarsDice/Resources/Audio/`.
+
+## 9. Animation
+
+- **Dice:** integer-feeling tumbles (the current `rotation3DEffect` spin); next
+  step is cycling random faces before settling.
+- **Springs over eases** for tactile feel; keep durations short (0.3–0.6s).
+- Always provide a **reduce-motion** fallback (static dice) — see Backlog Epic D.
+
+## 10. Asset shopping / production list
+
+If commissioning or sourcing, this is the wishlist (priority order):
+1. **Die faces 1–6 + cup back** (16/24px) — the only assets that meaningfully
+   change the feel; everything else is already coded.
+2. **6–8 pirate opponent portraits** (32px) — gives the table personality.
+3. **App-icon glyph set** (16px): sound on/off, back, settings, skull, coin.
+4. **Table & wood textures** (32px tiling) — subtle, low-contrast.
+5. **Win/lose flourishes** (coins, skull, sparkles).
+
+**Where to look:** itch.io (search "pixel dice", "pirate pixel UI"), Kenney.nl
+(CC0), OpenGameArt, CraftPix. **Tools to make your own:** Aseprite (paid, the
+standard), Piskel (free, web), LibreSprite (free). **Licensing:** prefer CC0 /
+OFL / "commercial use OK"; keep a `CREDITS.md` for anything attribution-required.
+
+## 11. Do / Don't
+
+- ✅ Hard 1px Ink outlines, flat fills, integer scaling, limited palette.
+- ✅ Gold as a rare accent; red only for danger/lie.
+- ❌ No gradients-within-sprites, drop-shadow blur, or anti-aliased edges.
+- ❌ No realistic casino/slot-machine imagery (keeps the age rating low).
+- ❌ Don't drift the palette — sample from the table above.
