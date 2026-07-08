@@ -13,7 +13,7 @@ Usage:
 Outputs (1024x1024, opaque RGB — App Store compliant, no alpha):
     LiarsDice/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png   (primary)
     docs/icon-concepts/concept-bones.png
-    docs/icon-concepts/concept-skull.png
+    docs/icon-concepts/concept-clean.png
     docs/icon-concepts/concept-gold.png
 """
 
@@ -27,13 +27,11 @@ SCALE = 16       # 64 * 16 = 1024
 # ---- Palette (matches LiarsDice/Theme/Theme.swift) -------------------------
 NAVY      = (0x14, 0x15, 0x1F)
 NAVY_DK   = (0x0C, 0x0D, 0x14)
-TEAL      = (0x2A, 0x6F, 0x5A)
 TEAL_HI   = (0x37, 0x86, 0x6E)
 GOLD      = (0xF2, 0xC1, 0x4E)
 GOLD_DK   = (0xB8, 0x88, 0x2A)
 BONE      = (0xF6, 0xF0, 0xE2)
 BONE_HI   = (0xFF, 0xFC, 0xF2)
-BONE_SH   = (0xCE, 0xC4, 0xB0)
 PIP       = (0x23, 0x20, 0x1A)
 PARCH     = (0xD6, 0xC4, 0x96)
 PARCH_DK  = (0x8A, 0x73, 0x44)
@@ -78,7 +76,6 @@ def round_rect(c, x0, y0, x1, y1, rad, color, a=1.0):
     for y in range(int(y0), int(y1) + 1):
         for x in range(int(x0), int(x1) + 1):
             inside = True
-            # round the four corners
             for (cx, cy) in ((x0 + rad, y0 + rad), (x1 - rad, y0 + rad),
                              (x0 + rad, y1 - rad), (x1 - rad, y1 - rad)):
                 if ((x < x0 + rad and y < y0 + rad and (cx, cy) == (x0 + rad, y0 + rad)) or
@@ -89,14 +86,6 @@ def round_rect(c, x0, y0, x1, y1, rad, color, a=1.0):
                         inside = False
             if inside:
                 put(c, x, y, color, a)
-
-
-def round_rect_outline(c, x0, y0, x1, y1, rad, color, thick=1):
-    for t in range(thick):
-        # draw a slightly smaller filled ring by overlaying outline color on edge
-        pass
-    # simple approach: draw filled rect of outline color, then we redraw inner fill later
-    round_rect(c, x0, y0, x1, y1, rad, color)
 
 
 def thick_line(c, x0, y0, x1, y1, r, color):
@@ -112,87 +101,38 @@ def crossed_bones(c):
     # two bones forming an X behind the die
     bones = (((15, 15), (49, 49)), ((49, 15), (15, 49)))
     for (a, b) in bones:
-        # shaft
         thick_line(c, a[0], a[1], b[0], b[1], 2.2, PARCH_DK)
         thick_line(c, a[0], a[1], b[0], b[1], 1.4, PARCH)
         # knuckle knobs at each end
         for (kx, ky) in (a, b):
-            dx = 2.4 if kx < 32 else -2.4
             disc(c, kx, ky - 2, 2.1, PARCH_DK); disc(c, kx, ky - 2, 1.3, PARCH)
             disc(c, kx, ky + 2, 2.1, PARCH_DK); disc(c, kx, ky + 2, 1.3, PARCH)
 
 
-def die(c, cx, cy, half, face="five", body=BONE):
+def die(c, cx, cy, half, body=BONE):
+    """A bone die showing five pips (the brand face)."""
     x0, y0, x1, y1 = cx - half, cy - half, cx + half, cy + half
     rad = max(2, half * 0.32)
-    # drop shadow
-    round_rect(c, x0 + 2, y0 + 3, x1 + 2, y1 + 3, rad, (0, 0, 0), a=0.30)
-    # outline then body
-    round_rect(c, x0 - 1, y0 - 1, x1 + 1, y1 + 1, rad + 1, INK)
-    round_rect(c, x0, y0, x1, y1, rad, body)
-    # soft top highlight for a carved look
-    round_rect(c, x0 + 2, y0 + 2, x1 - 2, y0 + 4, rad * 0.5, BONE_HI, a=0.6)
+    round_rect(c, x0 + 2, y0 + 3, x1 + 2, y1 + 3, rad, (0, 0, 0), a=0.30)   # shadow
+    round_rect(c, x0 - 1, y0 - 1, x1 + 1, y1 + 1, rad + 1, INK)            # outline
+    round_rect(c, x0, y0, x1, y1, rad, body)                              # body
+    round_rect(c, x0 + 2, y0 + 2, x1 - 2, y0 + 4, rad * 0.5, BONE_HI, a=0.6)  # highlight
 
     inset = half * 0.42
     lo_x, hi_x = x0 + inset, x1 - inset
     lo_y, hi_y = y0 + inset, y1 - inset
-    mx, my = cx, cy
     pr = max(2.0, half * 0.16)
-
-    if face == "five":
-        spots = [(lo_x, lo_y), (hi_x, lo_y), (mx, my), (lo_x, hi_y), (hi_x, hi_y)]
-        for (px, py) in spots:
-            disc(c, px, py, pr + 0.6, INK)
-            disc(c, px, py, pr, PIP)
-    elif face == "skull":
-        skull(c, cx, cy, half)
+    for (px, py) in ((lo_x, lo_y), (hi_x, lo_y), (cx, cy), (lo_x, hi_y), (hi_x, hi_y)):
+        disc(c, px, py, pr + 0.6, INK)
+        disc(c, px, py, pr, PIP)
 
 
-SKULL = [
-    "..######..",
-    ".########.",
-    "##########",
-    "##.####.##",
-    "##.####.##",
-    "##########",
-    ".##.##.##.",
-    "..######..",
-    ".#.####.#.",
-    "..#.##.#..",
-]
-
-
-def skull(c, cx, cy, half):
-    rows = SKULL
-    h = len(rows)
-    w = len(rows[0])
-    px = max(1, (2 * half * 0.62) / w)
-    ox = cx - (w * px) / 2
-    oy = cy - (h * px) / 2
-    for j, row in enumerate(rows):
-        for i, ch in enumerate(row):
-            if ch == '#':
-                x = ox + i * px
-                y = oy + j * px
-                round_rect(c, x, y, x + px - 0.5, y + px - 0.5, 0, PIP)
-
-
-def frame(c):
-    # gold rounded border
-    round_rect(c, 3, 3, N - 4, N - 4, 7, GOLD_DK)
-    round_rect(c, 4, 4, N - 5, N - 5, 6, GOLD)
-    # cut the interior back to the background by re-blitting bg inside — instead,
-    # we draw the frame FIRST then content over it, so just inset-clear:
-    # (handled by drawing order in compose())
-
-
-def compose(face="five", bg=(TEAL_HI, NAVY_DK), die_body=BONE, with_bones=True):
+def compose(bg=(TEAL_HI, NAVY_DK), die_body=BONE, with_bones=True):
     c = new_canvas()
     background(c, bg[0], bg[1])
-    # gold frame ring
+    # gold frame ring, then re-blit the interior so the frame reads as a ring
     round_rect(c, 3, 3, N - 4, N - 4, 7, GOLD_DK)
     round_rect(c, 4, 4, N - 5, N - 5, 6, GOLD)
-    # clear interior back to gradient (so frame is a ring, not a filled plate)
     inner = new_canvas()
     background(inner, bg[0], bg[1])
     for y in range(7, N - 7):
@@ -200,15 +140,13 @@ def compose(face="five", bg=(TEAL_HI, NAVY_DK), die_body=BONE, with_bones=True):
             c[y][x] = list(inner[y][x])
     if with_bones:
         crossed_bones(c)
-    die(c, 32, 33, 16, face=face, body=die_body)
-    # a small gold glint, top-left of die
-    disc(c, 24, 25, 1.4, BONE_HI, a=0.9)
+    die(c, 32, 33, 16, body=die_body)
+    disc(c, 24, 25, 1.4, BONE_HI, a=0.9)   # small glint
     return c
 
 
 def write_png(path, canvas):
-    w = N * SCALE
-    h = N * SCALE
+    w = h = N * SCALE
     raw = bytearray()
     for row in canvas:
         line = bytearray()
@@ -236,15 +174,11 @@ def main():
     appicon = os.path.join(here, "LiarsDice/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png")
     concepts = os.path.join(here, "docs/icon-concepts")
 
-    # Primary: bone die (5) with crossed bones on teal->navy.
-    write_png(appicon, compose(face="five"))
-
-    write_png(os.path.join(concepts, "concept-bones.png"),
-              compose(face="five"))
-    write_png(os.path.join(concepts, "concept-clean.png"),
-              compose(face="five", with_bones=False))
+    write_png(appicon, compose())                                    # primary == bones
+    write_png(os.path.join(concepts, "concept-bones.png"), compose())
+    write_png(os.path.join(concepts, "concept-clean.png"), compose(with_bones=False))
     write_png(os.path.join(concepts, "concept-gold.png"),
-              compose(face="five", bg=(NAVY, NAVY_DK), die_body=GOLD, with_bones=True))
+              compose(bg=(NAVY, NAVY_DK), die_body=GOLD, with_bones=True))
 
 
 if __name__ == "__main__":

@@ -72,9 +72,14 @@ brew install xcodegen && xcodegen generate   # or: make project
 House rules (set on the main menu): crew size, bot difficulty, and an optional
 "ones are wild" variant.
 
-## Status & roadmap
+## Status
 
-This is an early, fully-playable foundation: complete rules engine, single-player
-vs. bots, full game loop, and a styled UI. See
-[`docs/ROADMAP.md`](docs/ROADMAP.md) for what's next on the way to the App Store
-(app icon & art, sound, polish, App Store Connect setup, TestFlight, and review).
+**Done — v0.1.0 "Playable foundation"** (see [`CHANGELOG.md`](CHANGELOG.md)):
+a complete rules engine, single-player vs. bots with three difficulties, the
+full game loop, a styled retro UI, the app icon, and chiptune sound + haptics.
+
+**In progress / next** (see [`docs/BACKLOG.md`](docs/BACKLOG.md) for the
+prioritized backlog and [`docs/ROADMAP.md`](docs/ROADMAP.md) for the path to the
+App Store): a first-run tutorial, VoiceOver accessibility, App Store Connect
+setup, and art/animation polish. The agreed visual direction is in
+[`docs/ART_DIRECTION.md`](docs/ART_DIRECTION.md).
